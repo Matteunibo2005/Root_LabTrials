@@ -5,6 +5,10 @@
 #include "TRootApplication.h"
 #include <TROOT.h>
 #include "TGraphErrors.h"
+
+//g++ -o test test.cpp root_project.cpp $(root-config --cflags --libs)
+
+
 void setStyle(){
   gROOT->SetStyle("Plain");
   gStyle->SetOptFit(1111);
