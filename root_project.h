@@ -2,7 +2,7 @@
 #define MYCLASS_H
 
 #include "TF1.h"
-#include "TH1F.h"
+#include "TH1.h"
 #include "TObject.h"
 #include "TList.h"
 #include <typeinfo>
@@ -31,12 +31,11 @@ public:
 
 private:
     TList *objList_;
-    int nGen_=100;
+    int nGen_=1E6;
     int nToys_;
     double samplingStep_;
     double ySmearing_;
     double Origin_;
 
-    ClassDef(Young, 1)
 };
 #endif
