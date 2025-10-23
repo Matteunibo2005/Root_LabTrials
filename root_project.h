@@ -5,21 +5,35 @@
 #include "TH1F.h"
 #include "TObject.h"
 #include "TList.h"
-//class MyClass : public TObject {
-class Young : public TObject{
+#include <typeinfo>
+// class MyClass : public TObject {
+class Young : public TObject
+{
 public:
-Young(); //def ctor
-Young(TList *l); //parametric ctor
-//public methods
-void Generate(); //generate according to a given function
-void Draw();
-~Young(); //dtor
+    Young();         // def ctor
+    Young(TList *l); // parametric ctor
+    // public methods
+    void Generate(); // generate according to a given function
+    void Draw();
+    ~Young(); // dtor
+
+    void Set_NGen(int n);
+    void Set_nToys(int n);
+    void Set_samplingSteps(double n);
+    void Set_ySmearing(double n);
+
+    int Get_NGen() const;
+    int Get_nToys() const;
+    double Get_samplingSteps() const;
+    double Get_ySmearing() const;
+
 private:
-TList *l_;
-int nGen_;
-int nToys_;
-double samplingStep_;
-double ySmearing_;
-ClassDef(Young,1)
+    TList *objList_;
+    int nGen_;
+    int nToys_;
+    double samplingStep_;
+    double ySmearing_;
+
+    ClassDef(Young, 1)
 };
 #endif
