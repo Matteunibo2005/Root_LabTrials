@@ -10,9 +10,9 @@
 class Young : public TObject
 {
 public:
-    Young();         // def ctor
+    Young(); // def ctor
     Young(TList *l); // parametric ctor
-    // public methods
+    //  public methods
     void Generate(); // generate according to a given function
     void Draw();
     ~Young(); // dtor
@@ -31,12 +31,11 @@ public:
 
 private:
     TList *objList_;
-    int nGen_;
+    int nGen_=100;
     int nToys_;
     double samplingStep_;
     double ySmearing_;
     double Origin_;
-    double samplingStep_;
 
     ClassDef(Young, 1)
 };

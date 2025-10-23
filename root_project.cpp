@@ -6,16 +6,16 @@ Young::Young()
 {
     objList_ = new TList();
 }
-Young::Young(TList *l)
-{
-    objList_ = new TList(l);
+
+Young::Young(TList *l){
+    objList_ = l;
 }
 
 void Young::Draw()
 {
     int i = objList_->GetEntries();
-    int col = objList_->GetEntries() / 3;
-    int row = objList_->GetEntries() / 3;
+    int col = 4;
+    int row = 4;
 
     TCanvas *c1 = new TCanvas("c1", "TList example", 200, 10, 600, 400);
     c1->Divide(row, col);
@@ -23,17 +23,17 @@ void Young::Draw()
     for (int j = 0; j < i; j++)
     {
         c1->cd(j + 1);
-        if (objList_->At(i)->InheritsFrom("TH1"))
+        if (objList_->At(j)->InheritsFrom("TH1F"))
         {
-            objList_->At(i)->Draw("H,E,P");
+            objList_->At(j)->Draw("APE");
         }
-        if (objList_->At(i)->InheritsFrom("TF1"))
+        if (objList_->At(j)->InheritsFrom("TF1"))
         {
-            objList_->At(i)->Draw("APE");
+            objList_->At(j)->Draw("APE");
         }
-        if (objList_->At(i)->InheritsFrom("TGraphError"))
+        if (objList_->At(j)->InheritsFrom("TGraphError"))
         {
-            objList_->At(i)->Draw("APE");
+            objList_->At(j)->Draw("APE");
         }
     }
 }
@@ -59,34 +59,40 @@ void Young::Generate()
     for (int i = 0; i < objList_->GetEntries(); i++)
     {
 
-            if(objList_->At(i)-> InheritsFrom("TGraphErrors"))
-            {
-                double max = Origin_;
-                double range = 0.03;
-                double samplingStep=Samplingstep_;
-                for (float x= max - range; x <= max + range; x+=samplingStep) {
-                    y= f -> Eval(x);
-                    y_smeared= gRandom->Gaus(y, ySmearing_);
-                };
-            }
-
-        if (objList_->At(i)->InheritsFrom("TH1"))
+        if (objList_->At(i)->InheritsFrom("TGraphErrors"))
         {
-            switch (count)
+            double max = Origin_;
+            double range = 0.03;
+            double samplingStep = this->Get_samplingSteps();
+            double ySmearing = this->Get_ySmearing();
+            for (float x = max - range; x <= max + range; x += samplingStep)
             {
-            case 0:
-                TH1 *h1 = (TH1 *)objList_->At(i);
+                double y = f->Eval(x);
+                double y_Smeared = gRandom->Gaus(y, ySmearing);
+            };
+        }
+
+        if (objList_->At(i)->InheritsFrom("TH1F"))
+        {
+            int count = 0;
+            if (count == 0)
+            {
+                TH1F *h1 = (TH1F *)objList_->At(i);
                 h1->FillRandom(f->GetName(), nGen_);
                 count++;
                 break;
-            case 1:
-                TH1 *h2 = (TH1 *)objList_->At(i);
-                h1->Fill(f->GetRandom());
+            }
+            else if (count == 1)
+            {
+                TH1F *h2 = (TH1F *)objList_->At(i);
+                h2->Fill(f->GetRandom(),nGen_);
                 count++;
 
                 break;
-            case 2:
-                TH1 *h3 = (TH1 *)objList_->At(i);
+            }
+            else if (count == 2)
+            {
+                TH1F *h3 = (TH1F *)objList_->At(i);
 
                 int generated{0};
                 while (generated < nGen_)
@@ -96,14 +102,15 @@ void Young::Generate()
 
                     if (!(y > f->Eval(x)))
                     {
-                        h1->Fill(y);
+                        h3->Fill(y,nGen_);
                         ++generated;
                     }
                 }
                 ++count;
                 break;
-
-            default:
+            }
+            else
+            {
                 break;
             }
         }
@@ -161,3 +168,4 @@ double Young::Get_ySmearing() const
 {
     return ySmearing_;
 }
+ClassImp(1);
