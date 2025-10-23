@@ -21,6 +21,8 @@ public:
     void Set_nToys(int n);
     void Set_samplingSteps(double n);
     void Set_ySmearing(double n);
+    void Set_Origin(double n);
+    void Set_samplingStep(double n);
 
     int Get_NGen() const;
     int Get_nToys() const;
@@ -33,6 +35,8 @@ private:
     int nToys_;
     double samplingStep_;
     double ySmearing_;
+    double Origin_;
+    double samplingStep_;
 
     ClassDef(Young, 1)
 };

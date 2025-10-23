@@ -59,13 +59,16 @@ void Young::Generate()
     for (int i = 0; i < objList_->GetEntries(); i++)
     {
 
-        //    if(objList_->At(i)-> InheritsFrom("TGraphErrors"))
-        //    {
-        //        double min{0.0};
-        //        double max{0.0};
-        //        f->GetRange(min, max);
-        //        for (float i = max, i <= max );
-        //    }
+            if(objList_->At(i)-> InheritsFrom("TGraphErrors"))
+            {
+                double max = Origin_;
+                double range = 0.03;
+                double samplingStep=Samplingstep_;
+                for (float x= max - range; x <= max + range; x+=samplingStep) {
+                    y= f -> Eval(x);
+                    y_smeared= gRandom->Gaus(y, ySmearing_);
+                };
+            }
 
         if (objList_->At(i)->InheritsFrom("TH1"))
         {
@@ -77,13 +80,13 @@ void Young::Generate()
                 count++;
                 break;
             case 1:
-                TH1 *h1 = (TH1 *)objList_->At(i);
+                TH1 *h2 = (TH1 *)objList_->At(i);
                 h1->Fill(f->GetRandom());
                 count++;
 
                 break;
             case 2:
-                TH1 *h1 = (TH1 *)objList_->At(i);
+                TH1 *h3 = (TH1 *)objList_->At(i);
 
                 int generated{0};
                 while (generated < nGen_)
@@ -127,6 +130,16 @@ void Young::Set_samplingSteps(double n)
 void Young::Set_ySmearing(double n)
 {
     ySmearing_ = n;
+}
+
+void Young::Set_Origin(double n)
+{
+    Origin_ = n;
+}
+
+void Young::Set_samplingStep(double n)
+{
+    samplingStep_ = n;
 }
 
 int Young::Get_NGen() const
