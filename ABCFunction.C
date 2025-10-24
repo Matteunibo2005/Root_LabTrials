@@ -1,5 +1,20 @@
 #include "TMath.h"
 #include <vector>
+#include "root_project.h"
+#include "TCanvas.h"
+#include "TRootApplication.h"
+#include "TStyle.h"
+#include <TROOT.h>
+#include "TApplication.h"
+#include "TGraphErrors.h"
+
+
+void setStyle(){
+  gROOT->SetStyle("Plain");
+  gStyle->SetOptFit(1111);
+  gStyle->SetPalette(57);
+  gStyle->SetOptTitle(0);
+}
 void ABCMacro()
 {
     TList *TL1 = new TList();
@@ -27,16 +42,16 @@ void ABCMacro()
     f4->SetParameters(d, 0.057, 632.8e-9, 0.5 * L, 500.);
     f5->SetParameters(d, 0.057, 632.8e-9, 2 * L, 500.);
 
-    TCanvas *c1 = new TCanvas("myCanvas", "ABC", 100, 100, 700, 500);
-    c1->Divide(2, 2);
-    c1->cd(1);
+    TCanvas *c = new TCanvas("myCanvas", "Varing d", 100, 100, 700, 500);
+    c->Divide(2, 2);
+    c->cd(1);
     f1->Draw();
-    c1->cd(2);
+    c->cd(2);
     f2->Draw();
-    c1->cd(3);
+    c->cd(3);
     f3->Draw();
 
-    TCanvas *c2 = new TCanvas("myCanvas 2", "ABC 2", 100, 100, 700, 500);
+    TCanvas *c2 = new TCanvas("myCanvas 2", "Varing L", 100, 100, 700, 500);
     c2->Divide(2, 2);
     c2->cd(1);
     f1->Draw();
@@ -48,15 +63,29 @@ void ABCMacro()
     TH1F *h1m = new TH1F("h1m", "histo 1", 100, x0 - 0.03, x0 + 0.03);
     TH1F *h2m = new TH1F("h2m", "histo 2", 100, x0 - 0.03, x0 + 0.03);
     TH1F *h3m = new TH1F("h3m", "histo 3", 100, x0 - 0.03, x0 + 0.03);
+    //TH1F *h4m = new TH1F("h4m", "histo 4", 100, x0 - 0.03, x0 + 0.03);
+    TGraphErrors *g = new TGraphErrors;
+
 
 
     TL1 ->Add(f1);
     TL1 ->Add(h1m);
     TL1 ->Add(h2m);
     TL1 ->Add(h3m);
+    //TL1 ->Add(h4m);
+    TL1 ->Add(g);
 
-    Young *A = new Young(TL1);
 
-    A->Generate();
-    A->Draw();
+    Young A(TL1, 1E3);
+    A.Set_ySmearing(10.);
+    A.Generate();
+    A.Draw();
+}
+
+int main(int argc, char **argv) {
+    TApplication app("app", &argc, argv);
+    setStyle();
+    ABCMacro();
+    app.Run(); // mantiene la finestra aperta
+    
 }
