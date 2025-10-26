@@ -27,16 +27,37 @@ void Young::Draw()
     //    int col = std::ceil(i / 2);
     //    int row = std::ceil(i / 2);
 
-    int col = 2;
-    int row = 2;
-
-    // std::cout << "i: " << i << " col: " << col << " row: " << row << std::endl;
-    TCanvas *c1 = new TCanvas("c1", "Histos", 200, 10, 1000, 600);
-    c1->Divide(row, col);
+    double countH{0};
+    double countF{0};
+    double countG{0};
+    // count histos
 
     for (int j = 0; j < i; j++)
     {
-        c1->cd(j + 1);
+
+        if (objList_->At(j)->InheritsFrom("TH1F"))
+        {
+            countH++;
+        }
+        if (objList_->At(j)->InheritsFrom("TF1"))
+        {
+            countF++;
+        }
+        if (objList_->At(j)->InheritsFrom("TGraphErrors"))
+        {
+            countG++;
+        }
+    }
+    
+
+    // std::cout << "i: " << i << " col: " << col << " row: " << row << std::endl;
+    TCanvas *c1 = new TCanvas("c1", "Histos", 200, 10, 1000, 600);
+    c1->Divide(std::ceil((countH+countF) / 2), std::floor((countH+countF )/ 2));
+
+    int padIndex{0};
+    for (int j = 0; j < i; j++)
+    {
+        c1->cd(++padIndex);
         if (objList_->At(j)->InheritsFrom("TH1F"))
         {
             TH1F *h = static_cast<TH1F *>(objList_->At(j));
@@ -56,16 +77,19 @@ void Young::Draw()
     c1->SaveAs("Histos.png");
 
     TCanvas *c3 = new TCanvas("c3", "Graphs", 200, 10, 1000, 600);
-    c3->Divide(row, col);
-
+    c3->Divide(std::ceil(countG / 2), std::floor(countG / 2));
+    padIndex = 0;
     for (int j = 0; j < i; j++)
     {
-        // c2->cd(j + 1);
 
         if (objList_->At(j)->InheritsFrom("TGraphErrors"))
         {
+            c3->cd(++padIndex);
             TGraphErrors *g = static_cast<TGraphErrors *>(objList_->At(j));
             // g->SetMarkerSize(20.0);
+            // std::cout << "graph: " << g->GetMean() <<std::endl;
+            // std::cout << "Pad " << j+1 << " -> TGraphErrors ptr: " << g << std::endl;
+
             g->SetMarkerStyle(21);
             g->SetMarkerSize(0.7);
             g->SetMarkerColor(kRed + 1);
@@ -73,19 +97,46 @@ void Young::Draw()
             g->SetLineWidth(2);
             g->SetFillColorAlpha(kRed - 9, 0.2);
 
-            //const char s = "Smearing: "+ySmearing_;
+            std::string lbl{"a"};
 
-            auto leg = new TLegend(0.68, 0.75, 0.88, 0.88);
+            if (padIndex == 1)
+            {
+                lbl = "smearing: " + std::to_string(0);
+            }
+            if (padIndex == 2)
+            {
+                lbl = "smearing: " + std::to_string(1);
+            }
+            if (padIndex == 3)
+            {
+                lbl = "smearing: " + std::to_string(10);
+            }
+            if (padIndex == 4)
+            {
+                lbl = "smearing: " + std::to_string(100);
+            }
+
+            TLegend *leg = new TLegend(0.68, 0.75, 0.88, 0.88);
             leg->AddEntry(g, "Grafico Misura Errore", "pl");
-            leg->AddEntry((TObject*)0,"Smearing: 100.0" , "");
+            leg->AddEntry((TObject *)0, lbl.c_str(), "");
             leg->SetFillStyle(0);
-            objList_->At(j)->Draw();
+            g->Draw();
             leg->Draw();
-
         }
     }
-    c3->SaveAs("100_SmearedGraph.png");
+    c3->SaveAs("SmearedGraphs.png");
+}
 
+void Young::fillSmearedGraph(TGraphErrors *g, TF1 *f)
+{
+    double max = f->GetMaximumX();
+    double range = 0.03;
+    for (double x = max - range; x <= max + range; x += samplingStep_)
+    {
+        double y = f->Eval(x);
+        double y_Smeared = gRandom->Gaus(y, ySmearing_);
+        g->SetPoint(g->GetN(), x, y_Smeared);
+    }
 }
 
 void Young::Generate()
@@ -99,9 +150,9 @@ void Young::Generate()
     TBenchmark bench;
     // finding function
     int count_h{0};
+    int count_g{0};
     for (int i = 0; i < objList_->GetEntries(); i++)
     {
-
         if (objList_->At(i)->InheritsFrom("TF1"))
         {
             f = static_cast<TF1 *>(objList_->At(i));
@@ -114,18 +165,24 @@ void Young::Generate()
 
         if (objList_->At(i)->InheritsFrom("TGraphErrors"))
         {
-            double max = f->GetMaximumX();
-            double range = 0.03;
-            TGraphErrors *g = static_cast<TGraphErrors *>(objList_->At(i));
-            std::cout << "Filling Graph   max:" << max << std::endl;
-
-            for (double x = max - range; x <= max + range; x += samplingStep_)
+            if (count_g == 0)
             {
-                double y = f->Eval(x);
-                double y_Smeared = gRandom->Gaus(y, ySmearing_);
-                g->SetPoint(g->GetN(), x, y_Smeared);
+                ySmearing_ = 0.;
             }
-            std::cout << "Filling Finished" << std::endl;
+            else if (count_g == 1)
+            {
+                ySmearing_ = 1.;
+            }
+            else if (count_g == 2)
+            {
+                ySmearing_ = 10.;
+            }
+            else if (count_g == 3)
+            {
+                ySmearing_ = 100.;
+            }
+            fillSmearedGraph(static_cast<TGraphErrors *>(objList_->At(i)), f);
+            count_g++;
         }
 
         if (objList_->At(i)->InheritsFrom("TH1F"))

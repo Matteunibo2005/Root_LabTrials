@@ -5,6 +5,7 @@
 #include "TH1.h"
 #include "TObject.h"
 #include "TList.h"
+#include "TGraphErrors.h"
 #include <typeinfo>
 // class MyClass : public TObject {
 class Young : public TObject
@@ -37,5 +38,7 @@ private:
     double samplingStep_{0.0006};
     double ySmearing_{1.0};
     double Origin_;
+
+    void fillSmearedGraph(TGraphErrors *g, TF1 *f);
 };
 #endif

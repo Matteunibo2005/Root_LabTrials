@@ -131,18 +131,27 @@ void ABCMacro()
     TH1F *h1m = new TH1F("h1m", "histo 1", 100, x0 - 0.03, x0 + 0.03);
     TH1F *h2m = new TH1F("h2m", "histo 2", 100, x0 - 0.03, x0 + 0.03);
     TH1F *h3m = new TH1F("h3m", "histo 3", 100, x0 - 0.03, x0 + 0.03);
-    // TH1F *h4m = new TH1F("h4m", "histo 4", 100, x0 - 0.03, x0 + 0.03);
-    TGraphErrors *g = new TGraphErrors;
+    //TH1F *h4m = new TH1F("h4m", "histo 4", 100, x0 - 0.03, x0 + 0.03);
+    TGraphErrors *g1 = new TGraphErrors;
+    TGraphErrors *g2 = new TGraphErrors;
+    TGraphErrors *g3 = new TGraphErrors;
+    TGraphErrors *g4 = new TGraphErrors;
+    //TGraphErrors *g5 = new TGraphErrors;
 
     TL1->Add(f1);
     TL1->Add(h1m);
     TL1->Add(h2m);
     TL1->Add(h3m);
-    // TL1 ->Add(h4m);
-    TL1->Add(g);
+    //TL1 ->Add(h4m);
+    TL1->Add(g1);
+    TL1->Add(g2);
+    TL1->Add(g3);
+    TL1->Add(g4);
+    //TL1->Add(g5);
+
 
     Young A(TL1, 1E6);
-    A.Set_ySmearing(100.0);
+    //A.Set_ySmearing(100.0);
     A.Generate();
     A.Draw();
 }
