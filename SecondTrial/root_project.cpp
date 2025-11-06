@@ -6,6 +6,9 @@
 #include "TBenchmark.h"
 #include "TGraphErrors.h"
 #include "TLegend.h"
+#include "TFitResultPtr.h"
+#include "TFitResult.h"
+
 Young::Young()
 {
     objList_ = new TList();
@@ -78,6 +81,7 @@ void Young::Draw()
     TCanvas *c3 = new TCanvas("c3", "Graphs", 200, 10, 1000, 600);
     c3->Divide(std::ceil(countG / 2), std::floor(countG / 2));
     padIndex = 0;
+
     for (int j = 1; j < i; j++)
     {
 
@@ -90,7 +94,7 @@ void Young::Draw()
             // std::cout << "Pad " << j+1 << " -> TGraphErrors ptr: " << g << std::endl;
 
             g->SetMarkerStyle(21);
-            g->SetMarkerSize(0.7);
+            g->SetMarkerSize(0.3);
             g->SetMarkerColor(kRed + 1);
             g->SetLineColor(kRed + 1);
             g->SetLineWidth(2);
@@ -105,25 +109,154 @@ void Young::Draw()
             if (padIndex == 2)
             {
                 lbl = "smearing: " + std::to_string(1);
+                Fitting(g);
             }
             if (padIndex == 3)
             {
                 lbl = "smearing: " + std::to_string(10);
+                //  Fitting(g);
             }
             if (padIndex == 4)
             {
                 lbl = "smearing: " + std::to_string(100);
+                // Fitting(g);
             }
 
             TLegend *leg = new TLegend(0.68, 0.75, 0.88, 0.88);
             leg->AddEntry(g, "Grafico Misura Errore", "pl");
             leg->AddEntry((TObject *)0, lbl.c_str(), "");
             leg->SetFillStyle(0);
-            g->Draw();
+            g->Draw("APEL");
             leg->Draw();
         }
     }
     c3->SaveAs("SmearedGraphs.png");
+}
+
+const TFitResultPtr Young::Fitting(TGraphErrors *g)
+{
+    TF1 *func = static_cast<TF1 *>(objList_->At(0));
+    // func->SetParameter(0, d_.value);
+    // func->SetParameter(3, L_.value);
+    // func->FixParameter(0, d_.value);
+    // func->FixParameter(3, L_.value);
+
+    func->SetLineColor(kGreen);
+    func->SetLineWidth(2);
+    TFitResultPtr f = g->Fit(func, "SEM");
+
+    std::cout << "X2: " << func->GetChisquare() << std::endl;
+    std::cout << "X2 reduced: " << func->GetChisquare() / func->GetNDF() << std::endl;
+    std::cout << "Probability: " << func->GetProb() << std::endl;
+
+    std::cout << "-----------------------------------------" << std::endl;
+
+    TMatrixD cor = f->GetCorrelationMatrix();
+    TMatrixD cov = f->GetCovarianceMatrix();
+
+    fitResult.cor.ResizeTo(cor);
+    fitResult.cov.ResizeTo(cov);
+
+    fitResult.cor = cor;
+    fitResult.cov = cov;
+
+    fitResult.cor.Print();
+    fitResult.cov.Print();
+
+    std::cout << "-----------------------------------------" << std::endl;
+    std::cout << "**************************************************" << std::endl;
+
+    return f;
+}
+
+const TFitResultPtr Young::Fitting(TGraphErrors *g, TF1 *func)
+{
+    func->FixParameter(0, d_.value);
+    func->FixParameter(3, L_.value);
+
+    func->SetLineColor(kGreen);
+    func->SetLineWidth(2);
+    TFitResultPtr f = g->Fit(func, "SEM");
+
+    std::cout << "X2: " << func->GetChisquare() << std::endl;
+    std::cout << "X2 reduced: " << func->GetChisquare() / func->GetNDF() << std::endl;
+    std::cout << "Probability: " << func->GetProb() << std::endl;
+
+    std::cout << "-----------------------------------------" << std::endl;
+
+    // TMatrixD cor = f->GetCorrelationMatrix();
+    // TMatrixD cov = f->GetCovarianceMatrix();
+    //
+    // fitResult.cor.ResizeTo(cor);
+    // fitResult.cov.ResizeTo(cov);
+    //
+    // fitResult.cor = cor;
+    // fitResult.cov = cov;
+    //
+    // fitResult.cor.Print();
+    // fitResult.cov.Print();
+
+    //   std::cout << "-----------------------------------------" << std::endl;
+    std::cout << "**************************************************" << std::endl;
+
+    return f;
+}
+
+void Young::Montecarlo()
+{
+    float i = objList_->GetEntries();
+    // TF1 *f;
+    yError_ = 1.;
+    ySmearing_ = 1.;
+
+    TH1F *pull1 = new TH1F("", "pull1", 100, -5., 5.);
+    TH1F *pull2 = new TH1F("", "pull2", 100, -5., 5.);
+    TH1F *pull3 = new TH1F("", "pull3", 100, -5., 5.);
+    //    TH1F *pull1 = new TH1F;
+    //    TH1F *pull2 = new TH1F;
+    //    TH1F *pull3 = new TH1F;
+
+    //    for (int i = 0; i < objList_->GetEntries(); i++)
+    //    {
+    //        if (objList_->At(i)->InheritsFrom("TF1"))
+    //        {
+    //            f = static_cast<TF1 *>(objList_->At(i));
+    //        }
+    //    }
+
+    TF1 *f = static_cast<TF1 *>(objList_->At(0));
+
+    for (int i = 0; i < 1000; i++)
+    {
+        TGraphErrors *g = new TGraphErrors;
+        fillSmearedGraph(g, f);
+        Fitting(g, f);
+        double p1 = (f->GetParameter(1) - 0.057) / f->GetParError(1);
+
+        pull1->Fill(p1);
+        pull2->Fill((f->GetParameter(2) - 632.8 * 1E-9) / f->GetParError(2));
+        pull3->Fill((f->GetParameter(4) - 500.) / f->GetParError(4));
+        f->SetParameter(1, 0.057);
+        f->SetParameter(2, 632.8e-9);
+        f->SetParameter(4, 500.);
+    }
+    TCanvas *smoothie = new TCanvas("smoothie", "Pull distributions", 1200, 800);
+    smoothie->Divide(2, 2);
+
+    smoothie->cd(1);
+    pull1->SetFillColorAlpha(kBlue - 9, 0.7);
+    pull1->Draw();
+
+    smoothie->cd(2);
+    pull2->SetFillColorAlpha(kGreen - 9, 0.7);
+    pull2->Draw();
+
+    smoothie->cd(3);
+    pull3->SetFillColorAlpha(kRed - 9, 0.7);
+    pull3->Draw();
+
+    smoothie->Update();
+    smoothie->SaveAs("Pulls.png");
 }
 
 void Young::fillSmearedGraph(TGraphErrors *g, TF1 *f)
@@ -135,13 +268,8 @@ void Young::fillSmearedGraph(TGraphErrors *g, TF1 *f)
         double y = f->Eval(x);
         double y_Smeared = gRandom->Gaus(y, ySmearing_);
         g->SetPoint(g->GetN(), x, y_Smeared);
+        g->SetPointError(g->GetN() - 1, 0, yError_);
     }
-    TF1 *func = static_cast<TF1 *>(objList_->At(0));
-    func->SetParameter(0,d_);
-    func->SetParameter(3,L_);
-    func->SetLineColor(kGreen);
-    func->SetLineWidth(2);
-    g->Fit(func, "ERS");
 }
 
 void Young::Generate()
@@ -177,14 +305,17 @@ void Young::Generate()
             else if (count_g == 1)
             {
                 ySmearing_ = 1.;
+                yError_ = 1.;
             }
             else if (count_g == 2)
             {
                 ySmearing_ = 10.;
+                yError_ = 10.;
             }
             else if (count_g == 3)
             {
                 ySmearing_ = 100.;
+                yError_ = 100.;
             }
             fillSmearedGraph(static_cast<TGraphErrors *>(objList_->At(i)), f);
             count_g++;
@@ -290,12 +421,12 @@ void Young::Set_yError(double n)
     yError_ = n;
 }
 
-void Young::Set_d(double n)
+void Young::Set_d(Param n)
 {
     d_ = n;
 }
 
-void Young::Set_L(double n)
+void Young::Set_L(Param n)
 {
     L_ = n;
 }
@@ -325,14 +456,12 @@ double Young::Get_yError() const
     return yError_;
 }
 
-double Young::Get_d() const
+Param Young::Get_d() const
 {
     return d_;
 }
 
-double Young::Get_L() const
+Param Young::Get_L() const
 {
     return L_;
 }
-
-void Young::Analyse() {}

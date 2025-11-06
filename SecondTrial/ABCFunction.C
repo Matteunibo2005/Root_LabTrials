@@ -159,7 +159,14 @@ void ABCMacro()
     //A.Set_ySmearing(100.0);
     A.Generate();
     A.Draw();
+
+    A.Montecarlo();
+   // A.fitResult.cov.Print();
+   // A.fitResult.cor.Print(); // 0-3 0-2 0=d 3=L 2=lambda
 }
+
+
+
 
 int main(int argc, char **argv)
 {
