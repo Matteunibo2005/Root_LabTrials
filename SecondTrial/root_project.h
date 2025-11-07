@@ -33,6 +33,8 @@ public:
     void Generate(); // generate according to a given function
     void Generate_2(); // generate according to a given function
     void Draw();
+    void DrawHistos();
+    void DrawGraphs();
     const TFitResultPtr Fitting(TGraphErrors *g);
     const TFitResultPtr Fitting(TGraphErrors *g, TF1 *func);
 
@@ -58,6 +60,7 @@ public:
 
     void Analyse();
     void Montecarlo();
+
 
 private:
     TList *objList_;

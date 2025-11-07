@@ -24,18 +24,13 @@ Young::Young(TList *l, int n)
     nGen_ = n;
 }
 
-void Young::Draw()
+void Young::DrawHistos()
 {
     float i = objList_->GetEntries();
-    //    int col = std::ceil(i / 2);
-    //    int row = std::ceil(i / 2);
-
     double countH{0};
     double countF{0};
-    double countG{0};
-    // count histos
 
-    for (int j = 1; j < i; j++)
+    for (int j = 0; j < i; j++)
     {
 
         if (objList_->At(j)->InheritsFrom("TH1F"))
@@ -46,13 +41,8 @@ void Young::Draw()
         {
             countF++;
         }
-        if (objList_->At(j)->InheritsFrom("TGraphErrors"))
-        {
-            countG++;
-        }
     }
 
-    // std::cout << "i: " << i << " col: " << col << " row: " << row << std::endl;
     TCanvas *c1 = new TCanvas("c1", "Histos", 200, 10, 1000, 600);
     c1->Divide(std::ceil((countH + countF) / 2), std::floor((countH + countF) / 2));
 
@@ -77,12 +67,25 @@ void Young::Draw()
     }
     c1->Update();
     c1->SaveAs("Histos.png");
+}
+void Young::DrawGraphs()
+{
+    float i = objList_->GetEntries();
+    double countG{0};
+    for (int j = 0; j < i; j++)
+    {
+
+        if (objList_->At(j)->InheritsFrom("TGraphErrors"))
+        {
+            countG++;
+        }
+    }
 
     TCanvas *c3 = new TCanvas("c3", "Graphs", 200, 10, 1000, 600);
     c3->Divide(std::ceil(countG / 2), std::floor(countG / 2));
-    padIndex = 0;
+    int padIndex = 0;
 
-    for (int j = 1; j < i; j++)
+    for (int j = 0; j < i; j++)
     {
 
         if (objList_->At(j)->InheritsFrom("TGraphErrors"))
@@ -94,11 +97,11 @@ void Young::Draw()
             // std::cout << "Pad " << j+1 << " -> TGraphErrors ptr: " << g << std::endl;
 
             g->SetMarkerStyle(21);
-            g->SetMarkerSize(0.3);
-            g->SetMarkerColor(kRed + 1);
-            g->SetLineColor(kRed + 1);
-            g->SetLineWidth(2);
-            g->SetFillColorAlpha(kRed - 9, 0.2);
+            g->SetMarkerSize(0.1);
+            g->SetMarkerColor(kBlue + 1);
+            g->SetLineColor(kBlue + 1);
+            g->SetLineWidth(1);
+            g->SetFillColorAlpha(kBlue - 9, 0.2);
 
             std::string lbl{"a"};
 
@@ -114,7 +117,7 @@ void Young::Draw()
             if (padIndex == 3)
             {
                 lbl = "smearing: " + std::to_string(10);
-                //  Fitting(g);
+                // Fitting(g);
             }
             if (padIndex == 4)
             {
@@ -133,13 +136,32 @@ void Young::Draw()
     c3->SaveAs("SmearedGraphs.png");
 }
 
+void Young::Draw()
+{
+    DrawHistos();
+    DrawGraphs();
+}
+
 const TFitResultPtr Young::Fitting(TGraphErrors *g)
 {
-    TF1 *func = static_cast<TF1 *>(objList_->At(0));
+    TF1 *func; //= static_cast<TF1 *>(objList_->At(0));;
+
+    for (int i = 0; i < objList_->GetEntries(); i++)
+    {
+        if (objList_->At(i)->InheritsFrom("TF1"))
+        {
+            if (std::string(objList_->At(i)->GetName()) == "ffit")
+            {
+                func = static_cast<TF1 *>(objList_->At(i));
+                break;
+            }
+        }
+    }
+
     // func->SetParameter(0, d_.value);
     // func->SetParameter(3, L_.value);
-    // func->FixParameter(0, d_.value);
-    // func->FixParameter(3, L_.value);
+    func->FixParameter(0, d_.value);
+    func->FixParameter(3, L_.value);
 
     func->SetLineColor(kGreen);
     func->SetLineWidth(2);
@@ -160,9 +182,14 @@ const TFitResultPtr Young::Fitting(TGraphErrors *g)
     fitResult.cor = cor;
     fitResult.cov = cov;
 
+    std::cout << "-----------------Correlation-----------------" << std::endl;
     fitResult.cor.Print();
+    std::cout << "-----------------Covariance-----------------" << std::endl;
     fitResult.cov.Print();
+    std::cout << "-----------------Hessian-----------------" << std::endl;
 
+    TMatrixD hess = cov.Invert(); // ottieni l’hessiana
+    hess.Print();
     std::cout << "-----------------------------------------" << std::endl;
     std::cout << "**************************************************" << std::endl;
 
@@ -212,17 +239,6 @@ void Young::Montecarlo()
     TH1F *pull1 = new TH1F("", "pull1", 100, -5., 5.);
     TH1F *pull2 = new TH1F("", "pull2", 100, -5., 5.);
     TH1F *pull3 = new TH1F("", "pull3", 100, -5., 5.);
-    //    TH1F *pull1 = new TH1F;
-    //    TH1F *pull2 = new TH1F;
-    //    TH1F *pull3 = new TH1F;
-
-    //    for (int i = 0; i < objList_->GetEntries(); i++)
-    //    {
-    //        if (objList_->At(i)->InheritsFrom("TF1"))
-    //        {
-    //            f = static_cast<TF1 *>(objList_->At(i));
-    //        }
-    //    }
 
     TF1 *f = static_cast<TF1 *>(objList_->At(0));
 
@@ -291,8 +307,6 @@ void Young::Generate()
             f = static_cast<TF1 *>(objList_->At(i));
         }
     }
-
-    // std::cout << "f(5): " << f->Eval(5) << std::endl;
     for (int i = 0; i < objList_->GetEntries(); i++)
     {
 
@@ -320,13 +334,6 @@ void Young::Generate()
             fillSmearedGraph(static_cast<TGraphErrors *>(objList_->At(i)), f);
             count_g++;
         }
-
-        // if (ySmearing_ == 1. && i > 3)
-        // {
-        //     TH1 *hist = static_cast<TH1 *>(objList_->At(i));
-
-        //     hist->Fit(func, "ERS");
-        // }
 
         if (objList_->At(i)->InheritsFrom("TH1F"))
         {
