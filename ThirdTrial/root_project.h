@@ -58,8 +58,9 @@ public:
     Param Get_d() const;
     Param Get_L() const;
 
-    void Analyse();
-    void Montecarlo();
+    void Analyse(double );
+    void Pulls();
+    
 
 
 private:
@@ -72,8 +73,11 @@ private:
     double yError_{1.};  //incertezza sperimentale in y assegnata ai punti del grafico
     Param d_ { 0.0001, 0.};
     Param L_ {1., 0.};
+
+    TF1 *fitfunc_;
     
 
     void fillSmearedGraph(TGraphErrors *g, TF1 *f);
+    void findFunction();
 };
 #endif

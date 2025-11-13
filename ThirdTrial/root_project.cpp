@@ -17,11 +17,13 @@ Young::Young()
 Young::Young(TList *l)
 {
     objList_ = l;
+    findFunction();
 }
 Young::Young(TList *l, int n)
 {
     objList_ = l;
     nGen_ = n;
+    findFunction();
 }
 
 void Young::DrawHistos()
@@ -229,7 +231,69 @@ const TFitResultPtr Young::Fitting(TGraphErrors *g, TF1 *func)
     return f;
 }
 
-void Young::Montecarlo()
+void Young::findFunction()
+{
+    //= static_cast<TF1 *>(objList_->At(0));;
+
+    for (int i = 0; i < objList_->GetEntries(); i++)
+    {
+        if (objList_->At(i)->InheritsFrom("TF1"))
+        {
+            if (std::string(objList_->At(i)->GetName()) == "ffit")
+            {
+                fitfunc_ = static_cast<TF1 *>(objList_->At(i));
+                break;
+            }
+        }
+    }
+}
+
+void Young::Analyse(double L)
+{
+    TGraphErrors *g;
+    TH1F *h;
+    ///std::cout << "error_: " << L << std::endl;
+
+
+    for (int i = 0; i < objList_->GetEntries(); i++)
+    {
+        if (objList_->At(i)->InheritsFrom("TGraphErrors"))
+        {
+            g = static_cast<TGraphErrors *>(objList_->At(i));
+            ySmearing_ = 1.;
+            yError_ = 1.;
+            fillSmearedGraph(g, fitfunc_);
+            break;
+        }
+    }
+
+    for (int i = 0; i < objList_->GetEntries(); i++)
+    {
+        if (objList_->At(i)->InheritsFrom("TH1F"))
+        {
+            h = static_cast<TH1F *>(objList_->At(i));
+            break;
+        }
+    }
+    
+    //fitfunc_->SetParameters(0.0001,0.057,632.8e-9,1.,500.);
+    h->GetXaxis()->SetRangeUser(1e-7, 1e-6);
+
+    fitfunc_->FixParameter(3, L);
+
+    for (int i = 0; i < 10; i++)
+    {
+        g->Fit(fitfunc_, "SEQ");
+        std::cout << fitfunc_->GetParameter(2) << std::endl;
+        h->Fill(fitfunc_->GetParameter(2));
+    }
+
+   // std::cout << "X2: " << fitfunc_->GetChisquare() << std::endl;
+   // std::cout << "X2 reduced: " << fitfunc_->GetChisquare() / fitfunc_->GetNDF() << std::endl;
+   // std::cout << "Probability: " << fitfunc_->GetProb() << std::endl;
+}
+
+void Young::Pulls()
 {
     float i = objList_->GetEntries();
     // TF1 *f;
@@ -314,7 +378,9 @@ void Young::Generate()
         {
             if (count_g == 0)
             {
-                ySmearing_ = 0.;
+                // ySmearing_ = 0.;
+                ySmearing_ = 1.;
+                yError_ = 1.;
             }
             else if (count_g == 1)
             {
@@ -391,7 +457,11 @@ void Young::Generate()
     bench.Show("HitMiss");
 }
 
-Young::~Young() { delete objList_; }
+Young::~Young()
+{
+    delete objList_;
+    delete fitfunc_;
+}
 
 void Young::Set_NGen(int n)
 {
