@@ -144,6 +144,59 @@ void Young::Draw()
     DrawGraphs();
 }
 
+const TFitResultPtr Young::Fitting()
+{
+    TGraphErrors *g;
+
+    /// std::cout << "error_: " << L << std::endl;
+
+    for (int i = 0; i < objList_->GetEntries(); i++)
+    {
+        if (objList_->At(i)->InheritsFrom("TGraphErrors"))
+        {
+            g = static_cast<TGraphErrors *>(objList_->At(i));
+        }
+    }
+
+
+    fitfunc_->SetLineColor(kGreen);
+    fitfunc_->SetLineWidth(2);
+
+    fitfunc_->SetParName(0, "d");      // larghezza fenditura o separazione
+    fitfunc_->SetParName(1, "x0");     // posizione centrale
+    fitfunc_->SetParName(2, "lambda"); // lunghezza d'onda
+    fitfunc_->SetParName(3, "L");      // distanza schermo
+    fitfunc_->SetParName(4, "I0");
+    TFitResultPtr f = g->Fit(fitfunc_, "SEM");
+
+    std::cout << "X2: " << fitfunc_->GetChisquare() << std::endl;
+    std::cout << "X2 reduced: " << fitfunc_->GetChisquare() / fitfunc_->GetNDF() << std::endl;
+    std::cout << "Probability: " << fitfunc_->GetProb() << std::endl;
+
+    std::cout << "-----------------------------------------" << std::endl;
+
+    TMatrixD cor = f->GetCorrelationMatrix();
+    TMatrixD cov = f->GetCovarianceMatrix();
+
+    fitResult.cor.ResizeTo(cor);
+    fitResult.cov.ResizeTo(cov);
+
+    fitResult.cor = cor;
+    fitResult.cov = cov;
+
+    std::cout << "-----------------Correlation-----------------" << std::endl;
+    fitResult.cor.Print();
+    std::cout << "-----------------Covariance-----------------" << std::endl;
+    fitResult.cov.Print();
+    std::cout << "-----------------Hessian-----------------" << std::endl;
+
+    TMatrixD hess = cov.Invert(); // ottieni l’hessiana
+    hess.Print();
+    std::cout << "-----------------------------------------" << std::endl;
+    std::cout << "**************************************************" << std::endl;
+
+    return f;
+}
 const TFitResultPtr Young::Fitting(TGraphErrors *g)
 {
     TF1 *func; //= static_cast<TF1 *>(objList_->At(0));;
@@ -162,8 +215,8 @@ const TFitResultPtr Young::Fitting(TGraphErrors *g)
 
     // func->SetParameter(0, d_.value);
     // func->SetParameter(3, L_.value);
-    func->FixParameter(0, d_.value);
-    func->FixParameter(3, L_.value);
+    //func->FixParameter(0, d_.value);
+    //func->FixParameter(3, L_.value);
 
     func->SetLineColor(kGreen);
     func->SetLineWidth(2);
@@ -252,45 +305,35 @@ void Young::Analyse(double L)
 {
     TGraphErrors *g;
     TH1F *h;
-    ///std::cout << "error_: " << L << std::endl;
-
+    /// std::cout << "error_: " << L << std::endl;
 
     for (int i = 0; i < objList_->GetEntries(); i++)
     {
         if (objList_->At(i)->InheritsFrom("TGraphErrors"))
         {
             g = static_cast<TGraphErrors *>(objList_->At(i));
-            ySmearing_ = 1.;
-            yError_ = 1.;
-            fillSmearedGraph(g, fitfunc_);
-            break;
         }
-    }
-
-    for (int i = 0; i < objList_->GetEntries(); i++)
-    {
         if (objList_->At(i)->InheritsFrom("TH1F"))
         {
             h = static_cast<TH1F *>(objList_->At(i));
-            break;
         }
     }
-    
-    //fitfunc_->SetParameters(0.0001,0.057,632.8e-9,1.,500.);
-    h->GetXaxis()->SetRangeUser(1e-7, 1e-6);
+
+    // fitfunc_->SetParameters(0.0001,0.057,632.8e-9,1.,500.);
+    // h->GetXaxis()->SetRangeUser(1e-7, 1e-6);
 
     fitfunc_->FixParameter(3, L);
+    // fitfunc_->FixParameter(0, d_.value);
 
-    for (int i = 0; i < 10; i++)
-    {
-        g->Fit(fitfunc_, "SEQ");
-        std::cout << fitfunc_->GetParameter(2) << std::endl;
-        h->Fill(fitfunc_->GetParameter(2));
-    }
+    g->Fit(fitfunc_, "SEQ");
+    // std::cout << fitfunc_->GetParameter(2) << std::endl;
+    h->Fill(fitfunc_->GetParameter(2));
+    //    std::cout << "n: " << h->GetEntries() << std::endl;
+    // fitfunc_->SetParameters(0.0001, 0.057, 632.8e-9, 1., 500.);
 
-   // std::cout << "X2: " << fitfunc_->GetChisquare() << std::endl;
-   // std::cout << "X2 reduced: " << fitfunc_->GetChisquare() / fitfunc_->GetNDF() << std::endl;
-   // std::cout << "Probability: " << fitfunc_->GetProb() << std::endl;
+    // std::cout << "X2: " << fitfunc_->GetChisquare() << std::endl;
+    // std::cout << "X2 reduced: " << fitfunc_->GetChisquare() / fitfunc_->GetNDF() << std::endl;
+    // std::cout << "Probability: " << fitfunc_->GetProb() << std::endl;
 }
 
 void Young::Pulls()

@@ -143,7 +143,7 @@ void ABCMacro()
     // TGraphErrors *g5 = new TGraphErrors;
 
     // TL1->Add(f1);
-    TL1->Add(h1m);
+    //TL1->Add(h1m);
     // TL1->Add(h2m);
     // TL1->Add(h3m);
     // TL1 ->Add(h4m);
@@ -162,27 +162,10 @@ void ABCMacro()
     // A.Montecarlo();
     // A.fitResult.cov.Print();
     // A.fitResult.cor.Print(); // 0-3 0-2 0=d 3=L 2=lambda
+    ffit->SetParameter(4, 1*500.);
     A.Generate();
-    h1m->Reset();
-
-    gRandom->SetSeed(56821);
-    for (int i = 0; i < 1000; i++) // 1000 trials
-    {
-        double error = gRandom->Uniform(0.999, 1.001);
-        //
-        // std::cout << "error: " << L << std::endl;
-        A.Analyse(error);
-    }
-    h1m->Draw();
-    std::cout << "RMS: " << h1m->GetRMS() << "\n";
+    A.Fitting();
     A.DrawGraphs();
-    ffit->SetParameters(0.0001, 0.057, 632.8e-9, 1., 500.);
-
-    std::cout << "********************************************" << std::endl;
-    g1->Fit(ffit, "ES");
-    
-
-
 
 }
 
