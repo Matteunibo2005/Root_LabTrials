@@ -4,6 +4,8 @@
 #include <numbers>
 #include <vector>
 
+//g++ -o Calculate ExpectedFrequencies.cpp
+
 double calculate_falias(const long int &fs, const long int &f)
 {
     double ws = 2 * M_PI * fs;
