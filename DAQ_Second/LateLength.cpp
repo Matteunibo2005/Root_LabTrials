@@ -23,7 +23,7 @@ void doppio_fit_diviso() {
     g1->SetTitle("Grafico 1 con fit lineare;X;Y");
     g1->Draw("APE");
     g1->Fit(f1, "Q");  // Q = quiet
-
+    
     // ======= SECONDO GRAFICO =======
     c->cd(2);
     g2->SetTitle("Grafico 2 con fit lineare;X;Y");
@@ -36,7 +36,7 @@ void doppio_fit_diviso() {
     double m1 = f1->GetParameter(1);
     double m2 = f2->GetParameter(1);
 
-    std::cout << "Pendenza grafico 1: " << m1 << std::endl;
-    std::cout << "Pendenza grafico 2: " << m2 << std::endl;
+    std::cout << "Pendenza grafico 1: " << 1/m1 << std::endl;
+    std::cout << "Pendenza grafico 2: " << 1/m2 << std::endl;
 }
 

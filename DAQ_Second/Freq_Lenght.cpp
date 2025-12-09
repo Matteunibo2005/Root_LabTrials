@@ -1,4 +1,4 @@
-void doppio_fit_diviso() {
+void triplo_fit_diviso() {
 
     // ======= Lettura dei due TGraphErrors =======
     TGraphErrors *g1 = new TGraphErrors("FreqLenght1.txt", "%lg %lg %lg");
@@ -13,7 +13,7 @@ void doppio_fit_diviso() {
     
     g3->SetMarkerStyle(21);
     g3->SetMarkerColor(kGreen);
-
+    
     // ======= Creazione Canvas diviso =======
     TCanvas *c = new TCanvas("c", "Fit doppi", 900, 800);
     c->Divide(2,2);
@@ -25,19 +25,19 @@ void doppio_fit_diviso() {
 
     // ======= PRIMO GRAFICO =======
     c->cd(1);
-    g1->SetTitle("Grafico 1 con fit lineare;X;Y");
+    g1->SetTitle("Grafico 20m con fit lineare;X;Y");
     g1->Draw("APE");
     g1->Fit(f1, "Q");  // Q = quiet
 
     // ======= SECONDO GRAFICO =======
     c->cd(2);
-    g2->SetTitle("Grafico 2 con fit lineare;X;Y");
+    g2->SetTitle("Grafico 50m con fit lineare;X;Y");
     g2->Draw("APE");
     g2->Fit(f2, "Q");
 
        // ======= TERZO GRAFICO =======
     c->cd(3);
-    g3->SetTitle("Grafico 3 con fit lineare;X;Y");
+    g3->SetTitle("Grafico 70m con fit lineare;X;Y");
     g3->Draw("APE");
     g3->Fit(f3, "Q");
 
